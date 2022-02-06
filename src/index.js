@@ -6,7 +6,7 @@
  */
 
 /**
- * @typedef {object} metaData
+ * @typedef {Object} metaData
  * @description Fetched link meta data
  * @property {string} image - link's meta image
  * @property {string} title - link's meta title
@@ -31,31 +31,21 @@ import polyfill from 'url-polyfill';
  */
 export default class LinkTool {
   /**
-   * Notify core that read-only mode supported
-   *
-   * @returns {boolean}
-   */
-  static get isReadOnlySupported() {
-    return true;
-  }
-
-  /**
    * Get Tool toolbox settings
    * icon - Tool icon's SVG
    * title - title to show in toolbox
    *
-   * @returns {{icon: string, title: string}}
+   * @return {{icon: string, title: string}}
    */
   static get toolbox() {
     return {
       icon: ToolboxIcon,
-      title: 'Link',
+      title: 'Link'
     };
   }
 
   /**
    * Allow to press Enter inside the LinkTool input
-   *
    * @returns {boolean}
    * @public
    */
@@ -67,18 +57,16 @@ export default class LinkTool {
    * @param {LinkToolData} data - previously saved data
    * @param {config} config - user config for Tool
    * @param {object} api - Editor.js API
-   * @param {boolean} readOnly - read-only mode flag
    */
-  constructor({ data, config, api, readOnly }) {
+  constructor({ data, config, api }) {
     this.api = api;
-    this.readOnly = readOnly;
 
     /**
      * Tool's initial config
      */
     this.config = {
       endpoint: config.endpoint || '',
-      headers: config.headers || {},
+      fetcher: config.fetcher || undefined
     };
 
     this.nodes = {
@@ -91,12 +79,12 @@ export default class LinkTool {
       linkImage: null,
       linkTitle: null,
       linkDescription: null,
-      linkText: null,
+      linkText: null
     };
 
     this._data = {
       link: '',
-      meta: {},
+      meta: {}
     };
 
     this.data = data;
@@ -104,10 +92,9 @@ export default class LinkTool {
 
   /**
    * Renders Block content
-   *
    * @public
    *
-   * @returns {HTMLDivElement}
+   * @return {HTMLDivElement}
    */
   render() {
     this.nodes.wrapper = this.make('div', this.CSS.baseClass);
@@ -133,50 +120,36 @@ export default class LinkTool {
 
   /**
    * Return Block data
-   *
    * @public
    *
-   * @returns {LinkToolData}
+   * @return {LinkToolData}
    */
   save() {
     return this.data;
   }
 
   /**
-   * Validate Block data
-   * - check if given link is an empty string or not.
-   *
-   * @public
-   *
-   * @returns {boolean} false if saved data is incorrect, otherwise true
-   */
-  validate() {
-    return this.data.link.trim() !== '';
-  }
-
-  /**
    * Stores all Tool's data
-   *
    * @param {LinkToolData} data
    */
   set data(data) {
     this._data = Object.assign({}, {
       link: data.link || this._data.link,
-      meta: data.meta || this._data.meta,
+      meta: data.meta || this._data.meta
     });
   }
 
   /**
    * Return Tool data
-   *
-   * @returns {LinkToolData}
+   * @return {LinkToolData} data
    */
   get data() {
     return this._data;
   }
 
   /**
-   * @returns {object} - Link Tool styles
+   * @return {object} - Link Tool styles
+   * @constructor
    */
   get CSS() {
     return {
@@ -198,49 +171,46 @@ export default class LinkTool {
       linkText: 'link-tool__anchor',
       progress: 'link-tool__progress',
       progressLoading: 'link-tool__progress--loading',
-      progressLoaded: 'link-tool__progress--loaded',
+      progressLoaded: 'link-tool__progress--loaded'
     };
   }
 
   /**
    * Prepare input holder
-   *
-   * @returns {HTMLElement}
+   * @return {HTMLElement} - url input
    */
   makeInputHolder() {
     const inputHolder = this.make('div', this.CSS.inputHolder);
 
     this.nodes.progress = this.make('label', this.CSS.progress);
     this.nodes.input = this.make('div', [this.CSS.input, this.CSS.inputEl], {
-      contentEditable: !this.readOnly,
+      contentEditable: true
     });
 
-    this.nodes.input.dataset.placeholder = this.api.i18n.t('Link');
+    this.nodes.input.dataset.placeholder = 'Link';
 
-    if (!this.readOnly) {
-      this.nodes.input.addEventListener('paste', (event) => {
-        this.startFetching(event);
-      });
+    this.nodes.input.addEventListener('paste', (event) => {
+      this.startFetching(event);
+    });
 
-      this.nodes.input.addEventListener('keydown', (event) => {
-        const [ENTER, A] = [13, 65];
-        const cmdPressed = event.ctrlKey || event.metaKey;
+    this.nodes.input.addEventListener('keydown', (event) => {
+      const [ENTER, A] = [13, 65];
+      const cmdPressed = event.ctrlKey || event.metaKey;
 
-        switch (event.keyCode) {
-          case ENTER:
-            event.preventDefault();
-            event.stopPropagation();
+      switch (event.keyCode) {
+        case ENTER:
+          event.preventDefault();
+          event.stopPropagation();
 
-            this.startFetching(event);
-            break;
-          case A:
-            if (cmdPressed) {
-              this.selectLinkUrl(event);
-            }
-            break;
-        }
-      });
-    }
+          this.startFetching(event);
+          break;
+        case A:
+          if (cmdPressed) {
+            this.selectLinkUrl(event);
+          }
+          break;
+      }
+    });
 
     inputHolder.appendChild(this.nodes.progress);
     inputHolder.appendChild(this.nodes.input);
@@ -250,8 +220,6 @@ export default class LinkTool {
 
   /**
    * Activates link data fetching by url
-   *
-   * @param {PasteEvent} event
    */
   startFetching(event) {
     let url = this.nodes.input.textContent;
@@ -274,7 +242,6 @@ export default class LinkTool {
 
   /**
    * Select LinkTool input content by CMD+A
-   *
    * @param {KeyboardEvent} event
    */
   selectLinkUrl(event) {
@@ -296,13 +263,12 @@ export default class LinkTool {
 
   /**
    * Prepare link preview holder
-   *
-   * @returns {HTMLElement}
+   * @return {HTMLElement}
    */
   prepareLinkPreview() {
     const holder = this.make('a', this.CSS.linkContent, {
       target: '_blank',
-      rel: 'nofollow noindex noreferrer',
+      rel: 'nofollow noindex noreferrer'
     });
 
     this.nodes.linkImage = this.make('div', this.CSS.linkImage);
@@ -315,7 +281,6 @@ export default class LinkTool {
 
   /**
    * Compose link preview from fetched data
-   *
    * @param {metaData} meta - link meta data
    */
   showLinkPreview({ image, title, description }) {
@@ -376,7 +341,6 @@ export default class LinkTool {
 
   /**
    * Sends to backend pasted url and receives link data
-   *
    * @param {string} url - link source url
    */
   async fetchLinkData(url) {
@@ -384,44 +348,40 @@ export default class LinkTool {
     this.data = { link: url };
 
     try {
-      const { body } = await (ajax.get({
-        url: this.config.endpoint,
-        headers: this.config.headers,
-        data: {
-          url,
-        },
-      }));
+      let response;
 
-      this.onFetch(body);
+      if (this.config.fetcher && typeof this.config.fetcher.fetchLinkDataForUrl === 'function') {
+        response = await (this.config.fetcher.fetchLinkDataForUrl(url));
+      } else {
+        response = await (ajax.get({
+          url: this.config.endpoint,
+          data: {
+            url
+          }
+        }));
+      }
+      this.onFetch(response);
     } catch (error) {
-      this.fetchingFailed(this.api.i18n.t('Couldn\'t fetch the link data'));
+      this.fetchingFailed('Haven\'t received data from server');
     }
   }
 
   /**
    * Link data fetching callback
-   *
    * @param {UploadResponseFormat} response
    */
   onFetch(response) {
     if (!response || !response.success) {
-      this.fetchingFailed(this.api.i18n.t('Couldn\'t get this link data, try the other one'));
-
+      this.fetchingFailed('Can not get this link data, try another');
       return;
     }
 
     const metaData = response.meta;
 
-    const link = response.link || this.data.link;
-
-    this.data = {
-      meta: metaData,
-      link,
-    };
+    this.data = { meta: metaData };
 
     if (!metaData) {
-      this.fetchingFailed(this.api.i18n.t('Wrong response format from the server'));
-
+      this.fetchingFailed('Wrong response format from server');
       return;
     }
 
@@ -433,7 +393,6 @@ export default class LinkTool {
 
   /**
    * Handle link fetching errors
-   *
    * @private
    *
    * @param {string} errorMessage
@@ -441,7 +400,7 @@ export default class LinkTool {
   fetchingFailed(errorMessage) {
     this.api.notifier.show({
       message: errorMessage,
-      style: 'error',
+      style: 'error'
     });
 
     this.applyErrorStyle();
@@ -449,14 +408,13 @@ export default class LinkTool {
 
   /**
    * Helper method for elements creation
-   *
    * @param tagName
    * @param classNames
    * @param attributes
-   * @returns {HTMLElement}
+   * @return {HTMLElement}
    */
   make(tagName, classNames = null, attributes = {}) {
-    const el = document.createElement(tagName);
+    let el = document.createElement(tagName);
 
     if (Array.isArray(classNames)) {
       el.classList.add(...classNames);
@@ -464,7 +422,7 @@ export default class LinkTool {
       el.classList.add(classNames);
     }
 
-    for (const attrName in attributes) {
+    for (let attrName in attributes) {
       el[attrName] = attributes[attrName];
     }
 
